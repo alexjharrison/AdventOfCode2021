@@ -122,11 +122,11 @@ const input = `7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3
 
 run({
   part1: {
-    tests: [{ input, expected: 4512 }],
+    // tests: [{ input, expected: 4512 }],
     solution: part1,
   },
   part2: {
-    tests: [{ input, expected: 1924 }],
+    // tests: [{ input, expected: 1924 }],
     solution: part2,
   },
   trimTestInputs: true,
