@@ -10,17 +10,14 @@ function printGrid(): void {
   console.log("\n--------------------\n")
 }
 
-function gridLoop(sideEffect: boolean, steps: number, cb: CbFunc): void {
+function gridLoop(steps: number, cb: CbFunc, loopCleanupCb?: () => void): void {
   for (let step = 0; step < steps; step++) {
     for (let row = 0; row < rows.length; row++) {
       for (let col = 0; col < rows[row].length; col++) {
         cb(row, col)
       }
     }
-    if (sideEffect) {
-      countBursts()
-      printGrid()
-    }
+    loopCleanupCb && loopCleanupCb()
   }
 }
 
@@ -48,7 +45,7 @@ function increaseNeighbors(row: number, col: number): void {
 }
 
 function countBursts(): void {
-  gridLoop(false, 1, (row, col) => {
+  gridLoop(1, (row, col) => {
     if (rows[row][col] === -1) {
       rows[row][col]++
       bursts++
@@ -60,7 +57,10 @@ const part1 = (input: string) => {
   rows = input.split("\n").map(row => row.split("").map(Number))
   const loops = 100
   bursts = 0
-  gridLoop(true, loops, increaseSelf)
+  gridLoop(loops, increaseSelf, () => {
+    countBursts()
+    printGrid()
+  })
   return bursts
 }
 
@@ -91,5 +91,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  // onlyTests: true,
+  onlyTests: true,
 })
