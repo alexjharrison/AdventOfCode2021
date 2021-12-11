@@ -10,14 +10,19 @@ function printGrid(): void {
   console.log("\n--------------------\n")
 }
 
-function gridLoop(steps: number, cb: CbFunc, loopCleanupCb?: () => void): void {
+function gridLoop(
+  steps: number,
+  cb: CbFunc,
+  loopCleanupCb?: (step: number) => boolean,
+): number | void {
   for (let step = 0; step < steps; step++) {
     for (let row = 0; row < rows.length; row++) {
       for (let col = 0; col < rows[row].length; col++) {
         cb(row, col)
       }
     }
-    loopCleanupCb && loopCleanupCb()
+    const shouldStop = loopCleanupCb && loopCleanupCb(step)
+    if (shouldStop) return step + 1
   }
 }
 
@@ -59,13 +64,29 @@ const part1 = (input: string) => {
   bursts = 0
   gridLoop(loops, increaseSelf, () => {
     countBursts()
-    printGrid()
+    // printGrid()
+    return false
   })
   return bursts
 }
 
 const part2 = (input: string) => {
-  return
+  rows = input.split("\n").map(row => row.split("").map(Number))
+  const loops = Infinity
+  bursts = 0
+  return gridLoop(loops, increaseSelf, step => {
+    countBursts()
+
+    let points = 0
+    gridLoop(1, (col, row) => {
+      points += rows[col][row]
+    })
+    if (points === 0) {
+      printGrid()
+      return true
+    }
+    return false
+  })
 }
 
 const input = `5483143223
@@ -81,15 +102,13 @@ const input = `5483143223
 
 run({
   part1: {
-    tests: [{ input, expected: 1656 }],
+    // tests: [{ input, expected: 1656 }],
     solution: part1,
   },
   part2: {
-    tests: [
-      // { input, expected: "" },
-    ],
+    tests: [{ input, expected: 195 }],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 })
