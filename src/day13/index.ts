@@ -1,5 +1,4 @@
 import run from "aocrunner"
-import { fips } from "crypto"
 
 let grid: boolean[][]
 let folds: string[]
