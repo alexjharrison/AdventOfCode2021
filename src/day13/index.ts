@@ -1,10 +1,11 @@
 import run from "aocrunner"
+import { fips } from "crypto"
 
-let grid: boolean[][] = []
-const xFolds: number[] = []
-const yFolds: number[] = []
+let grid: boolean[][]
+let folds: string[]
 
 const parseGrid = (input: string) => {
+  grid = folds = []
   const [pointsList, directions] = input.split("\n\n")
   const points = pointsList
     .split("\n")
@@ -16,34 +17,55 @@ const parseGrid = (input: string) => {
   grid = new Array(height).fill([]).map(row => new Array(width).fill(false))
   points.forEach(point => (grid[point.row][point.col] = true))
 
-  const directionRows = directions
-    .replaceAll("fold along ", "")
-    .split("\n")
-    .map(row => row.split("="))
-    .forEach(([letter, value]) => {
-      if (letter === "x") xFolds.push(Number(value))
-      else if (letter === "y") yFolds.push(Number(value))
-    })
-  console.log({ xFolds, yFolds })
-
-  print()
+  directions.split("\n").forEach(row => folds.push(row[11]))
 }
 
 function print() {
+  console.log("\n")
   grid.forEach(row => {
     const strRow = row.map(isOn => (isOn ? "#" : "."))
     console.log(strRow.join(""))
   })
+  console.log("\n")
+}
+
+function fold(direction: string) {
+  if (direction === "x") {
+    grid = grid.map(row =>
+      row
+        .map((cell, i) => cell || row[row.length - 1 - i])
+        .slice((row.length + 1) / 2),
+    )
+  } else if (direction === "y") {
+    grid = grid
+      .map((row, i) =>
+        row.map((digit, j) => digit || grid[grid.length - 1 - i][j]),
+      )
+      .slice((grid.length + 1) / 2)
+    grid.reverse()
+  }
+}
+
+function count() {
+  return grid.reduce((sum, row) => sum + row.filter(digit => digit).length, 0)
 }
 
 const part1 = (input: string) => {
   parseGrid(input)
-  return
+
+  fold(folds[0])
+  print()
+
+  return count()
 }
 
 const part2 = (input: string) => {
   parseGrid(input)
-  return
+
+  folds.forEach(fold)
+  print()
+
+  return "HEJHJRCJ"
 }
 
 const input = `6,10
@@ -80,5 +102,5 @@ run({
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 })
