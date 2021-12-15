@@ -20,5 +20,9 @@
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@types/node-dijkstra": "^2.5.2",
+    "node-dijkstra": "^2.5.0"
   }
 }

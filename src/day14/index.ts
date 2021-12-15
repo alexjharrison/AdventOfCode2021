@@ -1,47 +1,31 @@
 import run from "aocrunner"
 
-const dict: { [key: string]: string[] } = {
-  CH: ["CB", "BH"],
-  HH: ["HN", "NH"],
-  CB: ["CH", "HB"],
-  NH: ["NC", "CH"],
-  HB: ["HC", "CB"],
-  HC: ["HB", "BC"],
-  HN: ["HC", "CN"],
-  NN: ["NC", "CN"],
-  BH: ["BH", "HH"],
-  NC: ["NB", "BC"],
-  NB: ["NB", "BB"],
-  BN: ["BB", "BN"],
-  BB: ["BN", "NB"],
-  BC: ["BB", "BC"],
-  CC: ["CN", "NC"],
-  CN: ["CC", "CN"],
-}
-const createHash = (): { [key: string]: number } => ({
-  CH: 0,
-  HH: 0,
-  CB: 0,
-  NH: 0,
-  HB: 0,
-  HC: 0,
-  HN: 0,
-  NN: 0,
-  BH: 0,
-  NC: 0,
-  NB: 0,
-  BN: 0,
-  BB: 0,
-  BC: 0,
-  CC: 0,
-  CN: 0,
-})
-const exampleHash = createHash()
-type Hash = typeof exampleHash
+type Hash = { [key: string]: number }
+type Dict = { [key: string]: string[] }
 
-const incHashFromString = (str: string, hash: Hash) => {
-  for (let i = 0; i < str.length - 1; i++) {
-    hash[str[i] + str[i + 1]]++
+let dict: Dict
+let hash: Hash
+let word: string
+
+const createDict = (input: string) => {
+  const [str, rules] = input.split("\n\n")
+  word = str
+  const lines = rules.split("\n").map(rule => rule.split(" -> "))
+
+  dict = lines.reduce(
+    (obj, [input, output]) => ({
+      ...obj,
+      [input]: [input[0] + output, output + input[1]],
+    }),
+    {},
+  )
+
+  hash = lines.reduce((obj, [input]) => ({ ...obj, [input]: 0 }), {})
+}
+
+const incHashFromString = () => {
+  for (let i = 0; i < word.length - 1; i++) {
+    hash[word[i] + word[i + 1]]++
   }
   return hash
 }
@@ -58,21 +42,22 @@ function insert(hash: Hash): Hash {
   return hash
 }
 
-function difference(hash: Hash): number {
-  const letterValues = ["H", "B", "C", "N"].reduce(
-    (acc, letter) => {
-      // ?
-      return acc
-    },
-    {
-      H: 0,
-      B: 0,
-      C: 0,
-      N: 0,
-    },
-  )
+function difference(): number {
+  const letterValues: Hash = [
+    ...new Set(Object.keys(dict).map(combo => combo[0])),
+  ].reduce((obj, letter) => ({ ...obj, [letter]: 0 }), {})
 
-  console.log(letterValues)
+  for (const [key, val] of Object.entries(hash)) {
+    letterValues[key[0]] += val
+    letterValues[key[1]] += val
+  }
+
+  letterValues[word[0]]++
+  letterValues[word[word.length - 1]]++
+
+  for (const [key, val] of Object.entries(letterValues)) {
+    letterValues[key] = val / 2
+  }
 
   const max = Math.max(...Object.values(letterValues))
   const min = Math.min(...Object.values(letterValues))
@@ -81,20 +66,45 @@ function difference(hash: Hash): number {
 }
 
 const part1 = (input: string) => {
-  let hash = createHash()
-  hash = incHashFromString(input, hash)
+  createDict(input)
+
+  hash = incHashFromString()
   for (let i = 0; i < 10; i++) {
     hash = insert(hash)
   }
 
-  return difference(hash)
+  return difference()
 }
 
 const part2 = (input: string) => {
-  return
+  createDict(input)
+
+  hash = incHashFromString()
+  for (let i = 0; i < 40; i++) {
+    hash = insert(hash)
+  }
+
+  return difference()
 }
 
-const input = `NNCB`
+const input = `NNCB
+
+CH -> B
+HH -> N
+CB -> H
+NH -> C
+HB -> C
+HC -> B
+HN -> C
+NN -> C
+BH -> H
+NC -> B
+NB -> B
+BN -> B
+BB -> N
+BC -> B
+CC -> N
+CN -> C`
 
 run({
   part1: {
@@ -102,11 +112,9 @@ run({
     solution: part1,
   },
   part2: {
-    tests: [
-      // { input, expected: "" },
-    ],
+    tests: [{ input, expected: 2188189693529 }],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 })
