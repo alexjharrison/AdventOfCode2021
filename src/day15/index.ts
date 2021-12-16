@@ -2,27 +2,28 @@ import run from "aocrunner"
 import Graph from "node-dijkstra"
 
 type Node = {
-  [key: string]: { value?: number; neighbors: { [key: string]: number } }
+  name: string
+  value?: number
+  neighbors: { [key: string]: number }
 }
 
-function mapNodes(input: string): Node[] {
+let grid: number[][] = []
+
+function mapNodes(): Node[] {
   const nodes: Node[] = []
-  const grid: number[][] = input
-    .split("\n")
-    .map(row => row.split("").map(Number))
 
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[row].length; col++) {
       let nodeId = `${col}-${row}`
-      let node: Node = { [nodeId]: { value: grid[col][row], neighbors: {} } }
+      let node: Node = { name: nodeId, value: grid[col][row], neighbors: {} }
 
       for (let i = -1; i <= 1; i++) {
         for (let j = -1; j <= 1; j++) {
           const neighborNodeId = `${col + i}-${row + j}`
           const neighborValue = grid[col + i]?.[row + j]
 
-          if (i !== j && neighborValue !== undefined) {
-            node[nodeId].neighbors[neighborNodeId] = neighborValue
+          if (Math.abs(i) !== Math.abs(j) && neighborValue !== undefined) {
+            node.neighbors[neighborNodeId] = neighborValue
             nodes.push(node)
           }
         }
@@ -32,20 +33,50 @@ function mapNodes(input: string): Node[] {
   return nodes
 }
 
-const part1 = (input: string) => {
-  const nodes = mapNodes(input)
-  const route = new Graph()
+function solve(): number {
+  const nodes = mapNodes()
+  const graph = new Graph()
 
   nodes.forEach(node => {
-    const [name, info] = Object.entries(node)
-    console.log(name, info)
-    // route.addNode()
+    graph.addNode(node.name, node.neighbors)
   })
-  return
+  const route: string[] = graph
+    .path(`0-0`, `${grid.length - 1}-${grid[0].length - 1}`)
+    .slice(1)
+
+  // console.log(route.map(point => nodes.find(node => node.name === point)))
+
+  // console.log(route)
+
+  return route.reduce(
+    (sum, point) => sum + (nodes.find(node => node.name === point)?.value || 0),
+    0,
+  )
+}
+
+const part1 = (input: string) => {
+  grid = input.split("\n").map(row => row.split("").map(Number))
+  return solve()
 }
 
 const part2 = (input: string) => {
-  return
+  const rows = input.split("\n")
+  const bigWidth = rows.length * 5
+
+  for (let row = 0; row < bigWidth; row++) {
+    grid[row] = []
+
+    for (let col = 0; col < bigWidth; col++) {
+      let sum = 0
+      sum += Number(rows[row % rows.length][col % rows.length])
+      sum += Math.floor(row / rows.length)
+      sum += Math.floor(col / rows.length)
+      let bonus = Math.floor(sum / 10)
+      sum %= 10
+      grid[row][col] = sum + bonus
+    }
+  }
+  return solve()
 }
 
 const input = `1163751742
@@ -61,15 +92,23 @@ const input = `1163751742
 
 run({
   part1: {
-    tests: [{ input, expected: 40 }],
+    tests: [
+      {
+        input,
+        expected: 40,
+      },
+    ],
     solution: part1,
   },
   part2: {
     tests: [
-      // { input, expected: "" },
+      {
+        input,
+        expected: 315,
+      },
     ],
     solution: part2,
   },
   trimTestInputs: true,
-  onlyTests: true,
+  // onlyTests: true,
 })
