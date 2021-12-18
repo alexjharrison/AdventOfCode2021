@@ -240,7 +240,7 @@
         "solved": true,
         "result": "920",
         "attempts": [],
-        "time": 0.7514
+        "time": 1.588
       },
       "part2": {
         "solved": false,
@@ -248,7 +248,7 @@
         "attempts": [
           "10185159904155"
         ],
-        "time": 4.1557
+        "time": 1.0009
       }
     },
     {

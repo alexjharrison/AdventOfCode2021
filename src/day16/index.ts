@@ -9,10 +9,10 @@ interface Packet {
 }
 
 let sequence: string = ""
-let shifted: number = 0
+let strShifted: number = 0
 
-function shift(numChars: number) {
-  shifted += numChars
+function strShift(numChars: number) {
+  strShifted += numChars
   const substr = sequence.slice(0, numChars)
   sequence = sequence.slice(numChars)
   return substr
@@ -20,8 +20,8 @@ function shift(numChars: number) {
 
 function processNext(): Packet {
   let packet: Packet = {
-    version: parseInt(shift(3), 2),
-    typeId: parseInt(shift(3), 2),
+    version: parseInt(strShift(3), 2),
+    typeId: parseInt(strShift(3), 2),
     value: null,
     children: [],
   }
@@ -33,18 +33,18 @@ function processNext(): Packet {
   // operator packet
   else {
     // 15 bits => length of subpackets
-    if (shift(1) === "0") {
-      const length = parseInt(shift(15), 2)
-      const startingLength = shifted
+    if (strShift(1) === "0") {
+      const length = parseInt(strShift(15), 2)
+      const startingLength = strShifted
 
-      while (shifted - startingLength < length) {
+      while (strShifted - startingLength < length) {
         const newChild = processNext()
         packet.children.push(newChild)
       }
     }
     // 11 bits => number of subpackets
     else {
-      const numSubpackets = parseInt(shift(11), 2)
+      const numSubpackets = parseInt(strShift(11), 2)
       for (let i = 0; i < numSubpackets; i++) {
         const newChild = processNext()
         packet.children.push(newChild)
@@ -56,10 +56,10 @@ function processNext(): Packet {
 
 function parseLiteralValue(): number {
   let sum = ""
-  while (shift(1) === "1") {
-    sum += shift(4)
+  while (strShift(1) === "1") {
+    sum += strShift(4)
   }
-  sum += shift(4)
+  sum += strShift(4)
   return parseInt(sum, 2)
 }
 
@@ -70,9 +70,9 @@ function parseVersions(packet: Packet): number {
   )
 }
 
-function parsePacket(packet: Packet): Packet {
+function parseValueFromChildren(packet: Packet): Packet {
   if (packet.value !== null) return packet
-  packet.children = packet.children.map(parsePacket)
+  packet.children = packet.children.map(parseValueFromChildren)
 
   // sum
   if (packet.typeId === 0)
@@ -102,19 +102,16 @@ function parsePacket(packet: Packet): Packet {
   }
   // greater than
   else if (packet.typeId === 5) {
-    console.log(packet.children.length)
     packet.value =
       (packet.children[0].value || 0) > (packet.children[1].value || 0) ? 1 : 0
   }
   // less than
   else if (packet.typeId === 6) {
-    console.log(packet.children.length)
     packet.value =
       (packet.children[0].value || 0) > (packet.children[1].value || 0) ? 0 : 1
   }
   // equal to
   else if (packet.typeId === 7) {
-    console.log(packet.children.length)
     packet.value =
       (packet.children[0].value || 0) === (packet.children[1].value || 0)
         ? 1
@@ -134,22 +131,30 @@ const part1 = (input: string) => {
 }
 
 const part2 = (input: string) => {
+  // hex to binary
   sequence = input
     .split("")
     .map(i => parseInt(i, 16).toString(2).padStart(4, "0"))
     .join("")
+
   const packet = processNext()
-  promises.writeFile("packet.json", JSON.stringify(packet), "utf-8")
-  return parsePacket(packet).value || 0
+  const valuesCalculated = parseValueFromChildren(packet)
+
+  promises.writeFile(
+    "./src/day16/packet.json",
+    JSON.stringify(valuesCalculated),
+    "utf-8",
+  )
+  return valuesCalculated.value || 0
 }
 
 run({
   part1: {
     tests: [
-      // { input: "8A004A801A8002F478", expected: 16 },
-      // { input: "620080001611562C8802118E34", expected: 12 },
-      // { input: "C0015000016115A2E0802F182340", expected: 23 },
-      // { input: "A0016C880162017C3686B18A3D4780", expected: 31 },
+      { input: "8A004A801A8002F478", expected: 16 },
+      { input: "620080001611562C8802118E34", expected: 12 },
+      { input: "C0015000016115A2E0802F182340", expected: 23 },
+      { input: "A0016C880162017C3686B18A3D4780", expected: 31 },
     ],
     solution: part1,
   },
